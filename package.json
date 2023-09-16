@@ -17,11 +17,9 @@
     "css": [],
     "clientScripts": [],
     "translations": {},
-    "scripts": {
-        "semantic-release": "semantic-release"
-    },
     "publishConfig": {
-        "access": "public"
+        "access": "public",
+        "registry": "https://gl.vprw.ru/api/v4/projects/92/packages/npm/"
     },
     "files": [
         "README.md",
@@ -30,10 +28,6 @@
         "main.js"
     ],
     "devDependencies": {
-        "@semantic-release/git": "^10.0.1",
-        "@semantic-release/gitlab": "^12.0.6",
-        "@semantic-release/npm": "^11.0.0",
-        "eslint": "^8.49.0",
-        "semantic-release": "^22.0.0"
+        "eslint": "^8.49.0"
     }
 }
