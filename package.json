@@ -1,0 +1,23 @@
+{
+    "name": "peertube-plugin-custom-transcoding-profile",
+    "version": "0.1.0",
+    "description": "Set a custom quality for transcoding videos in Peertube with CRF, preset and tune options",
+    "engine": {
+        "peertube": ">=3.3.0"
+    },
+    "keywords": [
+        "peertube",
+        "plugin"
+    ],
+    "homepage": "https://gl.vprw.ru/vapronva/peertube-custom-transcoding-profile",
+    "author": "vapronva",
+    "bugs": "https://gl.vprw.ru/vapronva/peertube-custom-transcoding-profile/issues",
+    "library": "./main.js",
+    "staticDirs": {},
+    "css": [],
+    "clientScripts": [],
+    "translations": {},
+    "devDependencies": {
+        "eslint": "^8.49.0"
+    }
+}

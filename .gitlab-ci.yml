@@ -1,0 +1,33 @@
+stages:
+  - init
+  - lint
+  - test
+
+cache:
+  paths:
+    - node_modules
+
+init:
+  stage: init
+  image: docker.io/library/node:20-alpine
+  script:
+    - npm install
+
+eslint:
+  stage: lint
+  needs:
+    - job: init
+      artifacts: true
+  image: docker.io/library/node:20-alpine
+  script:
+    - node_modules/eslint/bin/eslint.js .
+
+sast:
+  stage: test
+  needs:
+    - job: eslint
+      artifacts: true
+include:
+  - template: Security/SAST.gitlab-ci.yml
+  - template: Security/SAST-IaC.latest.gitlab-ci.yml
+  - template: Security/Secret-Detection.gitlab-ci.yml
