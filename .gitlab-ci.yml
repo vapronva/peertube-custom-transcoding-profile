@@ -2,6 +2,7 @@ stages:
   - init
   - lint
   - test
+  - release
 
 cache:
   paths:
@@ -31,3 +32,24 @@ include:
   - template: Security/SAST.gitlab-ci.yml
   - template: Security/SAST-IaC.latest.gitlab-ci.yml
   - template: Security/Secret-Detection.gitlab-ci.yml
+
+npm-ci-gitlab:
+  stage: release
+  needs:
+    - job: sast
+      artifacts: true
+  image: docker.io/library/node:20-alpine
+  before_script:
+    - npm ci --cache .npm --prefer-offline
+    - |
+      {
+        echo "@${CI_PROJECT_ROOT_NAMESPACE}:registry=${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/npm/"
+        echo "${CI_API_V4_URL#https?}/projects/${CI_PROJECT_ID}/packages/npm/:_authToken=\${CI_JOB_TOKEN}"
+      } | tee -a .npmrc
+    - npm run semantic-release
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - .npm/
