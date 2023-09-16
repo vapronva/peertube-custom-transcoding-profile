@@ -35,9 +35,6 @@ include:
 
 npm-ci-gitlab:
   stage: release
-  needs:
-    - job: sast
-      artifacts: true
   image: docker.io/library/node:20-alpine
   before_script:
     - npm ci --cache .npm --prefer-offline
