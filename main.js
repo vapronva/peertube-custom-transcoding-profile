@@ -32,6 +32,17 @@ async function register({
         }
         if (store.profile) {
             outputOptions.push(`-profile:v ${store.profile}`)
+            switch (store.profile) {
+            case "high10":
+                outputOptions.push("-pix_fmt yuv420p10le")
+                break
+            case "high422":
+                outputOptions.push("-pix_fmt yuv422p")
+                break
+            case "high444":
+                outputOptions.push("-pix_fmt yuv444p")
+                break
+            }
         }
         return {
             outputOptions
