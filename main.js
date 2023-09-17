@@ -22,14 +22,19 @@ async function register({
     })
 
     const buildVOD = (options) => {
+        const outputOptions = [
+            `-r ${options.fps}`,
+            `-crf ${store.crf}`,
+            `-preset ${store.preset}`
+        ]
+        if (store.tune) {
+            outputOptions.push(`-tune ${store.tune}`)
+        }
+        if (store.profile) {
+            outputOptions.push(`-profile:v ${store.profile}`)
+        }
         return {
-            outputOptions: [
-                `-r ${options.fps}`,
-                `-crf ${store.crf}`,
-                `-preset ${store.preset}`,
-                store.tune ? `-tune ${store.tune}` : "",
-                store.profile ? `-profile:v ${store.profile}` : ""
-            ]
+            outputOptions
         }
     }
 
