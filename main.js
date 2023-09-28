@@ -147,31 +147,31 @@ async function register({
         default: live_default_profile,
     })
 
-    function buildCRF(settingName) {
-        return `-crf ${store[settingName]}`
+    function buildCRF(settingName, options) {
+        return `${buildStreamSuffix("-crf:v", options.streamNum)} ${store[settingName]}`
     }
 
-    function buildPreset(settingName) {
-        return `-preset ${store[settingName]}`
+    function buildPreset(settingName, options) {
+        return `${buildStreamSuffix("-preset:v", options.streamNum)} ${store[settingName]}`
     }
 
-    function buildTune(settingName) {
-        return store[settingName] ? `-tune ${store[settingName]}` : ""
+    function buildTune(settingName, options) {
+        return store[settingName] ? `${buildStreamSuffix("-tune:v", options.streamNum)} ${store[settingName]}` : ""
     }
 
-    function buildProfile(settingName) {
+    function buildProfile(settingName, options) {
         const profile = store[settingName]
         if (profile) {
-            const outputOptions = [`-profile:v ${profile}`]
+            const outputOptions = [`${buildStreamSuffix("-profile:v", options.streamNum)} ${profile}`]
             switch (profile) {
             case "high10":
-                outputOptions.push("-pix_fmt yuv420p10le")
+                outputOptions.push(`${buildStreamSuffix("-pix_fmt:v", options.streamNum)} yuv420p10le`)
                 break
             case "high422":
-                outputOptions.push("-pix_fmt yuv422p")
+                outputOptions.push(`${buildStreamSuffix("-pix_fmt:v", options.streamNum)} yuv422p`)
                 break
             case "high444":
-                outputOptions.push("-pix_fmt yuv444p")
+                outputOptions.push(`${buildStreamSuffix("-pix_fmt:v", options.streamNum)} yuv444p`)
                 break
             }
             return outputOptions.join(" ")
@@ -186,7 +186,7 @@ async function register({
     function buildVODOptions(options) {
         logger.info("Building VOD options")
         const outputOptions = [
-            `-r ${options.fps}`,
+            `${buildStreamSuffix("-r:v", options.streamNum)} ${options.fps}`,
             buildCRF("vod_crf"),
             buildPreset("vod_preset"),
             buildTune("vod_tune"),
@@ -223,7 +223,7 @@ module.exports = {
     unregister,
 }
 
-function buildStreamSuffix (base, streamNum) {
+function buildStreamSuffix(base, streamNum) {
     if (streamNum !== undefined) {
         return `${base}:${streamNum}`
     }
