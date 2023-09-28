@@ -187,10 +187,10 @@ async function register({
         logger.info("Building VOD options")
         const outputOptions = [
             `-r ${options.fps}`,
-            buildCRF("vod_crf")(),
-            buildPreset("vod_preset")(),
-            buildTune("vod_tune")(),
-            buildProfile("vod_profile")(),
+            buildCRF("vod_crf"),
+            buildPreset("vod_preset"),
+            buildTune("vod_tune"),
+            buildProfile("vod_profile"),
         ]
         return {
             outputOptions: outputOptions.filter((x) => x),
@@ -202,10 +202,10 @@ async function register({
         logger.info("Building LIVE options")
         const outputOptions = [
             `-r ${options.fps}`,
-            buildCRF("live_crf")(),
-            buildPreset("live_preset")(),
-            buildTune("live_tune")(),
-            buildProfile("live_profile")(),
+            buildCRF("live_crf"),
+            buildPreset("live_preset"),
+            buildTune("live_tune"),
+            buildProfile("live_profile"),
         ]
         return {
             outputOptions: outputOptions.filter((x) => x),
