@@ -20,6 +20,10 @@
     "css": [],
     "clientScripts": [],
     "translations": {},
+    "publishConfig": {
+        "access": "public",
+        "registry": "https://gl.vprw.ru/api/v4/projects/92/packages/npm/"
+    },
     "files": [
         "README.md",
         "LICENSE",
