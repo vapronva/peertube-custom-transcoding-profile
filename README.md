@@ -10,6 +10,7 @@ This plugin adds a new transcoding profile to PeerTube with custom settings for 
 
 ## Changes
 
+- Adjust default CRF values
 - Added `profile` option
 - Added `tune` option
 - Added `preset` option

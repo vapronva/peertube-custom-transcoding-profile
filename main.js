@@ -21,6 +21,36 @@ async function register({
     const setting_profile_description =
     "Set the profile to be used when encoding. Note that some profiles are not supported by some codecs, and not all devices support all profiles. If you are unsure, leave this as None."
 
+    const setting_preset_options = [
+        { label: "Ultra Fast", value: "ultrafast" },
+        { label: "Super Fast", value: "superfast" },
+        { label: "Very Fast", value: "veryfast" },
+        { label: "Faster", value: "faster" },
+        { label: "Fast", value: "fast" },
+        { label: "Medium", value: "medium" },
+        { label: "Slow", value: "slow" },
+        { label: "Slower", value: "slower" },
+        { label: "Very Slow", value: "veryslow" },
+    ]
+    const setting_tune_options = [
+        { label: "None", value: null },
+        { label: "Film", value: "film" },
+        { label: "Animation", value: "animation" },
+        { label: "Grain", value: "grain" },
+        { label: "Still Image", value: "stillimage" },
+        { label: "Fast Decode", value: "fastdecode" },
+        { label: "Zero Latency", value: "zerolatency" },
+    ]
+    const setting_profile_options = [
+        { label: "None", value: null },
+        { label: "Baseline", value: "baseline" },
+        { label: "Main", value: "main" },
+        { label: "High", value: "high" },
+        { label: "High 10", value: "high10" },
+        { label: "High 4:2:2", value: "high422" },
+        { label: "High 4:4:4", value: "high444" },
+    ]
+
     const store = {
         vod_crf: await settingsManager.getSetting("vod_crf") || vod_default_crf,
         vod_preset: await settingsManager.getSetting("vod_preset") || vod_default_preset,
@@ -42,7 +72,7 @@ async function register({
         store.live_profile = settings["live_profile"]
     })
 
-    const buildCRF = (defaultVal, settingName, label, description) => {
+    function buildCRF(defaultVal, settingName, label, description) {
         registerSetting({
             name: settingName,
             label: label,
@@ -54,22 +84,12 @@ async function register({
         return () => `-crf ${store[settingName]}`
     }
 
-    const buildPreset = (defaultVal, settingName, label, description) => {
+    function buildPreset(defaultVal, settingName, label, description) {
         registerSetting({
             name: settingName,
             label: label,
             type: "select",
-            options: [
-                { label: "Ultra Fast", value: "ultrafast" },
-                { label: "Super Fast", value: "superfast" },
-                { label: "Very Fast", value: "veryfast" },
-                { label: "Faster", value: "faster" },
-                { label: "Fast", value: "fast" },
-                { label: "Medium", value: "medium" },
-                { label: "Slow", value: "slow" },
-                { label: "Slower", value: "slower" },
-                { label: "Very Slow", value: "veryslow" },
-            ],
+            options: setting_preset_options,
             descriptionHTML: description,
             private: true,
             default: defaultVal,
@@ -77,20 +97,12 @@ async function register({
         return () => `-preset ${store[settingName]}`
     }
 
-    const buildTune = (defaultVal, settingName, label, description) => {
+    function buildTune(defaultVal, settingName, label, description) {
         registerSetting({
             name: settingName,
             label: label,
             type: "select",
-            options: [
-                { label: "None", value: null },
-                { label: "Film", value: "film" },
-                { label: "Animation", value: "animation" },
-                { label: "Grain", value: "grain" },
-                { label: "Still Image", value: "stillimage" },
-                { label: "Fast Decode", value: "fastdecode" },
-                { label: "Zero Latency", value: "zerolatency" },
-            ],
+            options: setting_tune_options,
             descriptionHTML: description,
             private: true,
             default: defaultVal,
@@ -98,25 +110,17 @@ async function register({
         return () => (store[settingName] ? `-tune ${store[settingName]}` : "")
     }
 
-    const buildProfile = (defaultVal, settingName, label, description) => {
+    function buildProfile(defaultVal, settingName, label, description) {
         registerSetting({
             name: settingName,
             label: label,
             type: "select",
-            options: [
-                { label: "None", value: null },
-                { label: "Baseline", value: "baseline" },
-                { label: "Main", value: "main" },
-                { label: "High", value: "high" },
-                { label: "High 10", value: "high10" },
-                { label: "High 4:2:2", value: "high422" },
-                { label: "High 4:4:4", value: "high444" },
-            ],
+            options: setting_profile_options,
             descriptionHTML: description,
             private: true,
             default: defaultVal,
         })
-        return () => {
+        return function() {
             const profile = store[settingName]
             if (profile) {
                 const outputOptions = [`-profile:v ${profile}`]
