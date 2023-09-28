@@ -201,7 +201,7 @@ async function register({
     function buildLiveOptions(options) {
         logger.info("Building LIVE options")
         const outputOptions = [
-            `-r ${options.fps}`,
+            `${buildStreamSuffix("-r:v", options.streamNum)} ${options.fps}`,
             buildCRF("live_crf"),
             buildPreset("live_preset"),
             buildTune("live_tune"),
@@ -221,4 +221,11 @@ async function unregister() {
 module.exports = {
     register,
     unregister,
+}
+
+function buildStreamSuffix (base, streamNum) {
+    if (streamNum !== undefined) {
+        return `${base}:${streamNum}`
+    }
+    return base
 }
