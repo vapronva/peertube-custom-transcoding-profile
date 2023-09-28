@@ -2,7 +2,10 @@ async function register({
     registerSetting,
     settingsManager,
     transcodingManager,
+    peertubeHelpers,
 }) {
+    const { logger } = peertubeHelpers
+
     const vod_default_crf = 20
     const vod_default_preset = "slow"
     const vod_default_tune = null
@@ -72,141 +75,143 @@ async function register({
         store.live_profile = settings["live_profile"]
     })
 
-    function buildCRF(defaultVal, settingName, label, description) {
-        registerSetting({
-            name: settingName,
-            label: label,
-            type: "input",
-            descriptionHTML: description,
-            private: true,
-            default: defaultVal,
-        })
-        return () => `-crf ${store[settingName]}`
+    registerSetting({
+        name: "vod_crf",
+        label: "[VOD] Constatnt Rate Factor (CRF)",
+        type: "input",
+        descriptionHTML: setting_crf_description,
+        private: true,
+        default: vod_default_crf,
+    })
+    registerSetting({
+        name: "vod_preset",
+        label: "[VOD] Preset",
+        type: "select",
+        options: setting_preset_options,
+        descriptionHTML: setting_preset_description,
+        private: true,
+        default: vod_default_preset,
+    })
+    registerSetting({
+        name: "vod_tune",
+        label: "[VOD] Tune",
+        type: "select",
+        options: setting_tune_options,
+        descriptionHTML: setting_tune_description,
+        private: true,
+        default: vod_default_tune,
+    })
+    registerSetting({
+        name: "vod_profile",
+        label: "[VOD] Profile",
+        type: "select",
+        options: setting_profile_options,
+        descriptionHTML: setting_profile_description,
+        private: true,
+        default: vod_default_profile,
+    })
+
+    registerSetting({
+        name: "live_crf",
+        label: "[LIVE] Constatnt Rate Factor (CRF)",
+        type: "input",
+        descriptionHTML: setting_crf_description,
+        private: true,
+        default: live_default_crf,
+    })
+    registerSetting({
+        name: "live_preset",
+        label: "[LIVE] Preset",
+        type: "select",
+        options: setting_preset_options,
+        descriptionHTML: setting_preset_description,
+        private: true,
+        default: live_default_preset,
+    })
+    registerSetting({
+        name: "live_tune",
+        label: "[LIVE] Tune",
+        type: "select",
+        options: setting_tune_options,
+        descriptionHTML: setting_tune_description,
+        private: true,
+        default: live_default_tune,
+    })
+    registerSetting({
+        name: "live_profile",
+        label: "[LIVE] Profile",
+        type: "select",
+        options: setting_profile_options,
+        descriptionHTML: setting_profile_description,
+        private: true,
+        default: live_default_profile,
+    })
+
+    function buildCRF(settingName) {
+        return `-crf ${store[settingName]}`
     }
 
-    function buildPreset(defaultVal, settingName, label, description) {
-        registerSetting({
-            name: settingName,
-            label: label,
-            type: "select",
-            options: setting_preset_options,
-            descriptionHTML: description,
-            private: true,
-            default: defaultVal,
-        })
-        return () => `-preset ${store[settingName]}`
+    function buildPreset(settingName) {
+        return `-preset ${store[settingName]}`
     }
 
-    function buildTune(defaultVal, settingName, label, description) {
-        registerSetting({
-            name: settingName,
-            label: label,
-            type: "select",
-            options: setting_tune_options,
-            descriptionHTML: description,
-            private: true,
-            default: defaultVal,
-        })
-        return () => (store[settingName] ? `-tune ${store[settingName]}` : "")
+    function buildTune(settingName) {
+        return store[settingName] ? `-tune ${store[settingName]}` : ""
     }
 
-    function buildProfile(defaultVal, settingName, label, description) {
-        registerSetting({
-            name: settingName,
-            label: label,
-            type: "select",
-            options: setting_profile_options,
-            descriptionHTML: description,
-            private: true,
-            default: defaultVal,
-        })
-        return function() {
-            const profile = store[settingName]
-            if (profile) {
-                const outputOptions = [`-profile:v ${profile}`]
-                switch (profile) {
-                case "high10":
-                    outputOptions.push("-pix_fmt yuv420p10le")
-                    break
-                case "high422":
-                    outputOptions.push("-pix_fmt yuv422p")
-                    break
-                case "high444":
-                    outputOptions.push("-pix_fmt yuv444p")
-                    break
-                }
-                return outputOptions.join(" ")
-            } else {
-                return ""
+    function buildProfile(settingName) {
+        const profile = store[settingName]
+        if (profile) {
+            const outputOptions = [`-profile:v ${profile}`]
+            switch (profile) {
+            case "high10":
+                outputOptions.push("-pix_fmt yuv420p10le")
+                break
+            case "high422":
+                outputOptions.push("-pix_fmt yuv422p")
+                break
+            case "high444":
+                outputOptions.push("-pix_fmt yuv444p")
+                break
             }
+            return outputOptions.join(" ")
+        } else {
+            return ""
         }
     }
 
     const encoder = "libx264"
     const profileName = "vprw-custom-profile"
 
-    transcodingManager.addVODProfile(encoder, profileName, (options) => {
+    function buildVODOptions(options) {
+        logger.info("Building VOD options")
         const outputOptions = [
             `-r ${options.fps}`,
-            buildCRF(vod_default_crf, "vod_crf", setting_crf_description)(),
-            buildPreset(
-                vod_default_preset,
-                "vod_preset",
-                "[VOD] Preset",
-                setting_preset_description,
-            )(),
-            buildTune(
-                vod_default_tune,
-                "vod_tune",
-                "[VOD] Tune",
-                setting_tune_description,
-            )(),
-            buildProfile(
-                vod_default_profile,
-                "vod_profile",
-                "[VOD] Profile",
-                setting_profile_description,
-            )(),
+            buildCRF("vod_crf")(),
+            buildPreset("vod_preset")(),
+            buildTune("vod_tune")(),
+            buildProfile("vod_profile")(),
         ]
-        const filteredOutputOptions = outputOptions.filter((x) => x)
         return {
-            filteredOutputOptions,
+            outputOptions: outputOptions.filter((x) => x),
         }
-    })
+    }
+    transcodingManager.addVODProfile(encoder, profileName, buildVODOptions)
 
-    transcodingManager.addLiveProfile(encoder, profileName, (options) => {
+    function buildLiveOptions(options) {
+        logger.info("Building LIVE options")
         const outputOptions = [
             `-r ${options.fps}`,
-            buildCRF(
-                live_default_crf,
-                "live_crf",
-                "[LIVE] Constatnt Rate Factor (CRF)",
-                setting_crf_description,
-            )(),
-            buildPreset(
-                live_default_preset,
-                "live_preset",
-                "[LIVE] Preset",
-                setting_preset_description,
-            )(),
-            buildTune(
-                live_default_tune,
-                "live_tune",
-                "[LIVE] Tune",
-                setting_tune_description,
-            )(),
-            buildProfile(
-                live_default_profile,
-                "live_profile",
-                "[LIVE] Profile",
-                setting_profile_description,
-            )(),
+            buildCRF("live_crf")(),
+            buildPreset("live_preset")(),
+            buildTune("live_tune")(),
+            buildProfile("live_profile")(),
         ]
-        const filteredOutputOptions = outputOptions.filter((x) => x)
         return {
-            filteredOutputOptions,
+            outputOptions: outputOptions.filter((x) => x),
         }
-    })
+    }
+    transcodingManager.addLiveProfile(encoder, profileName, buildLiveOptions)
 }
 
 async function unregister() {
