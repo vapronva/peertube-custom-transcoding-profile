@@ -1,7 +1,7 @@
 {
     "name": "peertube-plugin-custom-transcoding-profile",
-    "version": "0.2.10",
-    "description": "Set a custom quality for transcoding videos in Peertube with CRF, preset and tune options",
+    "version": "0.3.0",
+    "description": "Set a custom quality for transcoding videos in Peertube with CRF, preset, tune options, and then some.",
     "engine": {
         "peertube": ">=3.3.0"
     },
