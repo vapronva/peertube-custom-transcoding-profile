@@ -11,7 +11,7 @@ async function register({
     const vod_default_tune = null
     const vod_default_profile = "high"
     const vod_default_audio_config_enabled = false
-    const vod_default_audio_configuration = "-b:a 320k -af loudnorm=I=-16:TP=-1.0"
+    const vod_default_audio_configuration = "-b:a 320k -filter:a loudnorm=I=-16:TP=-1.0"
     const live_default_crf = 21
     const live_default_preset = "fast"
     const live_default_tune = "zerolatency"
@@ -28,7 +28,7 @@ async function register({
     const setting_profile_description =
     "Designate the profile for encoding. Bear in mind that certain codecs do not support all profiles, and not every device is compatible with all profiles. If in doubt, leave this setting as None. This setting automatically adjusts the pixel format to match the selected profile. // Developer note: despite the presence of two pixel format options (one set by the plugin, the other by PeerTube), ffmpeg will only utilize the final one."
     const setting_audio_config_enabled_description =
-    "Determine whether to apply custom audio configurations during the encoding process. // Admin notice: PeerTube's default behavior may instruct ffmpeg to duplicate the audio stream which could lead to an error if you attempt to apply custom audio configurations. To avoid this, ensure to recompile PeerTube with this option disabled (found in packages/ffmpeg/src/ffmpeg-default-transcoding-profile.ts, lines 47-49). // Warning: this setting essentially controls the ffmpeg command; adding or modifying configurations here may potentially break the encoding process, introduce security risks, or cause other unexpected issues. While basic checks are performed (currently for bitrate `-b:a`, audio filters `-filter:a`, `-af`, and AAC options `-aac_*`), it's crucial to proceed with caution."
+    "Determine whether to apply custom audio configurations during the encoding process. // Admin notice: PeerTube's default behavior may instruct ffmpeg to duplicate the audio stream which could lead to an error if you attempt to apply custom audio configurations. To avoid this, ensure to recompile PeerTube with this option disabled (found in packages/ffmpeg/src/ffmpeg-default-transcoding-profile.ts, lines 47-49). // Warning: this setting essentially controls the ffmpeg command; adding or modifying configurations here may potentially break the encoding process, introduce security risks, or cause other unexpected issues. While basic checks are performed (currently for bitrate [-b:a], audio filters [-filter:a], [-af], and AAC options [-aac_*]), it's crucial to proceed with caution."
     const setting_audio_configuration_description =
     "Specify the audio configurations to be used during the encoding process. By default, a basic loudness normalization (-16 LUFS, -1 dBTP) (only for VOD) and bitrate setting (320k for VOD and 286k for live streams) are applied. Each argument and its corresponding value should be separated by a space. Please be aware that only bitrate, audio filters, and AAC options are currently supported. // Warning: this setting directly influences the ffmpeg command used for encoding. Any changes you make here can potentially disrupt the encoding process, introduce vulnerabilities, or result in unexpected behavior."
 
@@ -228,7 +228,7 @@ async function register({
                 outputOptions.push(`${buildStreamSuffix("-pix_fmt:v", options.streamNum)} yuv444p`)
                 break
             }
-            return outputOptions.join(" ")
+            return outputOptions
         } else {
             return ""
         }
@@ -244,7 +244,7 @@ async function register({
             logger.warn(`Invalid audio configuration: ${audioConfig}`)
             return ""
         }
-        const outputOptions = audioOptions.reduce((acc, option, index) => {
+        return audioOptions.reduce((acc, option, index) => {
             if (index % 2 !== 0) {
                 return acc
             }
@@ -267,7 +267,6 @@ async function register({
             }
             return acc
         }, [])
-        return outputOptions.join(" ")
     }
 
     const encoder = "libx264"
@@ -280,9 +279,11 @@ async function register({
             buildCRF("vod_crf", options),
             buildPreset("vod_preset", options),
             buildTune("vod_tune", options),
-            buildProfile("vod_profile", options),
-            store.vod_audio_config_enabled ? buildAudioOptions("vod_audio_configuration", options) : "",
+            ...buildProfile("vod_profile", options),
         ]
+        if (store.vod_audio_config_enabled) {
+            outputOptions.push(...buildAudioOptions("vod_audio_configuration", options))
+        }
         return {
             outputOptions: outputOptions.filter((x) => x),
         }
@@ -296,9 +297,11 @@ async function register({
             buildCRF("live_crf", options),
             buildPreset("live_preset", options),
             buildTune("live_tune", options),
-            buildProfile("live_profile", options),
-            store.live_audio_config_enabled ? buildAudioOptions("live_audio_configuration", options) : "",
+            ...buildProfile("live_profile", options),
         ]
+        if (store.live_audio_config_enabled) {
+            outputOptions.push(...buildAudioOptions("live_audio_configuration", options))
+        }
         return {
             outputOptions: outputOptions.filter((x) => x),
         }
