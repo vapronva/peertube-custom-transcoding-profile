@@ -235,28 +235,38 @@ async function register({
     }
 
     function buildAudioOptions(settingName, options) {
-        const audioOptions = store[settingName].split(" ")
-        const outputOptions = []
-        for (const element of audioOptions) {
-            const option = element
-            const [prefix, value] = option.split(" ")
+        const audioConfig = store[settingName]
+        if (!audioConfig) {
+            return ""
+        }
+        const audioOptions = audioConfig.split(" ")
+        if (audioOptions.length % 2 !== 0) {
+            logger.warn(`Invalid audio configuration: ${audioConfig}`)
+            return ""
+        }
+        const outputOptions = audioOptions.reduce((acc, option, index) => {
+            if (index % 2 !== 0) {
+                return acc
+            }
+            const [prefix, value] = [option, audioOptions[index + 1]]
             switch (prefix) {
             case "-b:a":
-                outputOptions.push(`${buildStreamSuffix("-b:a", options.streamNum)} ${value}`)
+                acc.push(`${buildStreamSuffix("-b:a", options.streamNum)} ${value}`)
                 break
             case "-af":
-                outputOptions.push(`${buildStreamSuffix("-af", options.streamNum)} ${value}`)
+                acc.push(`${buildStreamSuffix("-af", options.streamNum)} ${value}`)
                 break
             case "-filter:a":
-                outputOptions.push(`${buildStreamSuffix("-filter:a", options.streamNum)} ${value}`)
+                acc.push(`${buildStreamSuffix("-filter:a", options.streamNum)} ${value}`)
                 break
             case "-aac_":
-                outputOptions.push(`${buildStreamSuffix(prefix, options.streamNum)} ${value}`)
+                acc.push(`${buildStreamSuffix(prefix, options.streamNum)} ${value}`)
                 break
             default:
                 logger.warn(`Unknown audio option: ${option}`)
             }
-        }
+            return acc
+        }, [])
         return outputOptions.join(" ")
     }
 
@@ -271,7 +281,7 @@ async function register({
             buildPreset("vod_preset", options),
             buildTune("vod_tune", options),
             buildProfile("vod_profile", options),
-            store.vod_audio_config_enabled ? buildAudioOptions("vod_audio_filters", options) : "",
+            store.vod_audio_config_enabled ? buildAudioOptions("vod_audio_configuration", options) : "",
         ]
         return {
             outputOptions: outputOptions.filter((x) => x),
@@ -287,7 +297,7 @@ async function register({
             buildPreset("live_preset", options),
             buildTune("live_tune", options),
             buildProfile("live_profile", options),
-            store.live_audio_config_enabled ? buildAudioOptions("live_audio_filters", options) : "",
+            store.live_audio_config_enabled ? buildAudioOptions("live_audio_configuration", options) : "",
         ]
         return {
             outputOptions: outputOptions.filter((x) => x),
