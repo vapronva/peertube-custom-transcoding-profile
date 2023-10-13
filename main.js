@@ -20,17 +20,17 @@ async function register({
     const live_default_audio_filters = ""
 
     const setting_crf_description =
-    "Set the quality for the encode. Lower values mean better quality, but larger file sizes. The default is 23 (in ffmpeg), and sane values are between 18 and 28. The range is logarithmic, so increasing the CRF by 6 roughly doubles the file size, while decreasing it by 6 roughly halves the file size. Available values are 0-51."
+    "Configure the encoding \"quality\". Lower values equate to superior quality but increased file sizes. The default setting is 23 (as per ffmpeg), with optimal values ranging from 18 to 28. Note the logarithmic range: an increase of 6 in the CRF value approximately doubles the file size, while a decrease of 6 halves it. Choose from a spectrum of 0-51."
     const setting_preset_description =
-    "Set the preset to be used when encoding. A slower preset will provide better compression. This means that, for example, if you target a certain file size or constant bit rate, you will achieve better quality with a slower preset. Similarly, for constant quality encoding, you will simply save bitrate by choosing a slower preset."
+    "Specify the preset for encoding. A slower preset yields better compression, implying that for a specific file size or constant bit rate, a slower preset delivers enhanced quality. Conversely, for constant quality encoding, a slower preset conserves bitrate."
     const setting_tune_description =
-    "Tune the settings for a particular type of source or situation. If you are unsure, leave this as None."
+    "Optimize settings for specific source types or scenarios. If you're uncertain, it's advisable to leave this setting as None."
     const setting_profile_description =
-    "Set the profile to be used when encoding. Note that some profiles are not supported by some codecs, and not all devices support all profiles. If you are unsure, leave this as None."
+    "Designate the profile for encoding. Bear in mind that certain codecs do not support all profiles, and not every device is compatible with all profiles. If in doubt, leave this setting as None. This setting automatically adjusts the pixel format to match the selected profile. Developer note: despite the presence of two pixel format options (one set by the plugin, the other by PeerTube), ffmpeg will only utilize the final one."
     const setting_audio_filter_enabled_description =
-    "Set whether to apply audio filters when encoding. Important note: by default PeerTube might tell ffmpeg to copy the audio stream, in which case it might throw an error if you try to apply audio filtering; please make sure to recompile PeerTube with that option removed (packages/ffmpeg/src/ffmpeg-default-transcoding-profile.ts, lines 47-49)."
+    "Determine whether to implement audio filters during encoding. Admin notice: PeerTube may instruct ffmpeg to duplicate the audio stream by default, which could result in an error if you attempt to apply audio filtering. To circumvent this, ensure to recompile PeerTube with this option disabled (found in packages/ffmpeg/src/ffmpeg-default-transcoding-profile.ts, lines 47-49)."
     const setting_audio_filters_description =
-    "Set the audio filters to be used when encoding. By default, a basic loudness normalization (-16 LUFS, -1 dBTP) is applied."
+    "Assign the audio filters to be utilized during encoding. By default, a rudimentary loudness normalization (-16 LUFS, -1 dBTP) is implemented."
 
     const setting_preset_options = [
         { label: "Ultra Fast", value: "ultrafast" },
@@ -196,7 +196,13 @@ async function register({
     })
 
     function buildCRF(settingName, options) {
-        return `${buildStreamSuffix("-crf:v", options.streamNum)} ${store[settingName]}`
+        let crf = store[settingName]
+        if (crf < 0) {
+            crf = 0
+        } else {
+            crf = Math.min(crf, 51)
+        }
+        return `${buildStreamSuffix("-crf:v", options.streamNum)} ${crf}`
     }
 
     function buildPreset(settingName, options) {
