@@ -209,8 +209,13 @@ async function register({
         return `${buildStreamSuffix("-preset:v", options.streamNum)} ${store[settingName]}`
     }
 
-    function buildTune(settingName, options) {
-        return store[settingName] ? `${buildStreamSuffix("-tune:v", options.streamNum)} ${store[settingName]}` : ""
+    const buildTune = function(settingName, options) {
+        const tune = store[settingName]
+        if (tune !== null && tune !== undefined && tune !== "" && tune !== "none" && tune !== "null") {
+            return `${buildStreamSuffix("-tune:v", options.streamNum)} ${tune}`
+        } else {
+            return ""
+        }
     }
 
     function buildProfile(settingName, options) {
