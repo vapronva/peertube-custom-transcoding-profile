@@ -10,14 +10,14 @@ async function register({
     const vod_default_preset = "slow"
     const vod_default_tune = null
     const vod_default_profile = "high"
-    const vod_default_audio_filter_enabled = false
-    const vod_default_audio_filters = "loudnorm=I=-16:TP=-1.0"
+    const vod_default_audio_config_enabled = false
+    const vod_default_audio_configuration = "-b:a 320k -af loudnorm=I=-16:TP=-1.0"
     const live_default_crf = 21
     const live_default_preset = "fast"
     const live_default_tune = "zerolatency"
     const live_default_profile = "high"
-    const live_default_audio_filter_enabled = false
-    const live_default_audio_filters = ""
+    const live_default_audio_config_enabled = false
+    const live_default_audio_configuration = "-b:a 286k"
 
     const setting_crf_description =
     "Configure the encoding \"quality\". Lower values equate to superior quality but increased file sizes. The default setting is 23 (as per ffmpeg), with optimal values ranging from 18 to 28. Note the logarithmic range: an increase of 6 in the CRF value approximately doubles the file size, while a decrease of 6 halves it. Choose from a spectrum of 0-51."
@@ -26,11 +26,11 @@ async function register({
     const setting_tune_description =
     "Optimize settings for specific source types or scenarios. If you're uncertain, it's advisable to leave this setting as None."
     const setting_profile_description =
-    "Designate the profile for encoding. Bear in mind that certain codecs do not support all profiles, and not every device is compatible with all profiles. If in doubt, leave this setting as None. This setting automatically adjusts the pixel format to match the selected profile. Developer note: despite the presence of two pixel format options (one set by the plugin, the other by PeerTube), ffmpeg will only utilize the final one."
-    const setting_audio_filter_enabled_description =
-    "Determine whether to implement audio filters during encoding. Admin notice: PeerTube may instruct ffmpeg to duplicate the audio stream by default, which could result in an error if you attempt to apply audio filtering. To circumvent this, ensure to recompile PeerTube with this option disabled (found in packages/ffmpeg/src/ffmpeg-default-transcoding-profile.ts, lines 47-49)."
-    const setting_audio_filters_description =
-    "Assign the audio filters to be utilized during encoding. By default, a rudimentary loudness normalization (-16 LUFS, -1 dBTP) is implemented."
+    "Designate the profile for encoding. Bear in mind that certain codecs do not support all profiles, and not every device is compatible with all profiles. If in doubt, leave this setting as None. This setting automatically adjusts the pixel format to match the selected profile. // Developer note: despite the presence of two pixel format options (one set by the plugin, the other by PeerTube), ffmpeg will only utilize the final one."
+    const setting_audio_config_enabled_description =
+    "Determine whether to apply custom audio configurations during the encoding process. // Admin notice: PeerTube's default behavior may instruct ffmpeg to duplicate the audio stream which could lead to an error if you attempt to apply custom audio configurations. To avoid this, ensure to recompile PeerTube with this option disabled (found in packages/ffmpeg/src/ffmpeg-default-transcoding-profile.ts, lines 47-49). // Warning: this setting essentially controls the ffmpeg command; adding or modifying configurations here may potentially break the encoding process, introduce security risks, or cause other unexpected issues. While basic checks are performed (currently for bitrate `-b:a`, audio filters `-filter:a`, `-af`, and AAC options `-aac_*`), it's crucial to proceed with caution."
+    const setting_audio_configuration_description =
+    "Specify the audio configurations to be used during the encoding process. By default, a basic loudness normalization (-16 LUFS, -1 dBTP) (only for VOD) and bitrate setting (320k for VOD and 286k for live streams) are applied. Each argument and its corresponding value should be separated by a space. Please be aware that only bitrate, audio filters, and AAC options are currently supported. // Warning: this setting directly influences the ffmpeg command used for encoding. Any changes you make here can potentially disrupt the encoding process, introduce vulnerabilities, or result in unexpected behavior."
 
     const setting_preset_options = [
         { label: "Ultra Fast", value: "ultrafast" },
@@ -67,28 +67,28 @@ async function register({
         vod_preset: await settingsManager.getSetting("vod_preset") || vod_default_preset,
         vod_tune: await settingsManager.getSetting("vod_tune") || vod_default_tune,
         vod_profile: await settingsManager.getSetting("vod_profile") || vod_default_profile,
-        vod_audio_filter_enabled: await settingsManager.getSetting("vod_audio_filter_enabled") || vod_default_audio_filter_enabled,
-        vod_audio_filters: await settingsManager.getSetting("vod_audio_filters") || vod_default_audio_filters,
+        vod_audio_config_enabled: await settingsManager.getSetting("vod_audio_config_enabled") || vod_default_audio_config_enabled,
+        vod_audio_configuration: await settingsManager.getSetting("vod_audio_configuration") || vod_default_audio_configuration,
         live_crf: await settingsManager.getSetting("live_crf") || live_default_crf,
         live_preset: await settingsManager.getSetting("live_preset") || live_default_preset,
         live_tune: await settingsManager.getSetting("live_tune") || live_default_tune,
         live_profile: await settingsManager.getSetting("live_profile") || live_default_profile,
-        live_audio_filter_enabled: await settingsManager.getSetting("live_audio_filter_enabled") || live_default_audio_filter_enabled,
-        live_audio_filters: await settingsManager.getSetting("live_audio_filters") || live_default_audio_filters,
+        live_audio_config_enabled: await settingsManager.getSetting("live_audio_config_enabled") || live_default_audio_config_enabled,
+        live_audio_configuration: await settingsManager.getSetting("live_audio_configuration") || live_default_audio_configuration,
     }
     settingsManager.onSettingsChange((settings) => {
         store.vod_crf = settings["vod_crf"]
         store.vod_preset = settings["vod_preset"]
         store.vod_tune = settings["vod_tune"]
         store.vod_profile = settings["vod_profile"]
-        store.vod_audio_filter_enabled = settings["vod_audio_filter_enabled"]
-        store.vod_audio_filters = settings["vod_audio_filters"]
+        store.vod_audio_config_enabled = settings["vod_audio_config_enabled"]
+        store.vod_audio_configuration = settings["vod_audio_configuration"]
         store.live_crf = settings["live_crf"]
         store.live_preset = settings["live_preset"]
         store.live_tune = settings["live_tune"]
         store.live_profile = settings["live_profile"]
-        store.live_audio_filter_enabled = settings["live_audio_filter_enabled"]
-        store.live_audio_filters = settings["live_audio_filters"]
+        store.live_audio_config_enabled = settings["live_audio_config_enabled"]
+        store.live_audio_configuration = settings["live_audio_configuration"]
     })
 
     registerSetting({
@@ -127,20 +127,20 @@ async function register({
         default: vod_default_profile,
     })
     registerSetting({
-        name: "vod_audio_filter_enabled",
-        label: "[VOD] Add Audio Filter?",
+        name: "vod_audio_config_enabled",
+        label: "[VOD] Add Audio Configuration?",
         type: "input-checkbox",
-        descriptionHTML: setting_audio_filter_enabled_description,
+        descriptionHTML: setting_audio_config_enabled_description,
         private: true,
-        default: vod_default_audio_filter_enabled,
+        default: vod_default_audio_config_enabled,
     })
     registerSetting({
-        name: "vod_audio_filters",
-        label: "[VOD] Audio Filters",
+        name: "vod_audio_configuration",
+        label: "[VOD] Audio Configurations",
         type: "input",
-        descriptionHTML: setting_audio_filters_description,
+        descriptionHTML: setting_audio_configuration_description,
         private: true,
-        default: vod_default_audio_filters,
+        default: vod_default_audio_configuration,
     })
 
     registerSetting({
@@ -179,20 +179,20 @@ async function register({
         default: live_default_profile,
     })
     registerSetting({
-        name: "live_audio_filter_enabled",
-        label: "[LIVE] Add Audio Filter?",
+        name: "live_audio_config_enabled",
+        label: "[LIVE] Add Audio Configuration?",
         type: "input-checkbox",
-        descriptionHTML: setting_audio_filter_enabled_description,
+        descriptionHTML: setting_audio_config_enabled_description,
         private: true,
-        default: live_default_audio_filter_enabled,
+        default: live_default_audio_config_enabled,
     })
     registerSetting({
-        name: "vod_audio_filters",
-        label: "[LIVE] Audio Filters",
+        name: "live_audio_configuration",
+        label: "[LIVE] Audio Configurations",
         type: "input",
-        descriptionHTML: setting_audio_filters_description,
+        descriptionHTML: setting_audio_configuration_description,
         private: true,
-        default: live_default_audio_filters,
+        default: live_default_audio_configuration,
     })
 
     function buildCRF(settingName, options) {
@@ -234,8 +234,30 @@ async function register({
         }
     }
 
-    function buildAudioFilter(settingName, options) {
-        return store[settingName] ? `${buildStreamSuffix("-filter:a", options.streamNum)} ${store[settingName]}` : ""
+    function buildAudioOptions(settingName, options) {
+        const audioOptions = store[settingName].split(" ")
+        const outputOptions = []
+        for (const element of audioOptions) {
+            const option = element
+            const [prefix, value] = option.split(" ")
+            switch (prefix) {
+            case "-b:a":
+                outputOptions.push(`${buildStreamSuffix("-b:a", options.streamNum)} ${value}`)
+                break
+            case "-af":
+                outputOptions.push(`${buildStreamSuffix("-af", options.streamNum)} ${value}`)
+                break
+            case "-filter:a":
+                outputOptions.push(`${buildStreamSuffix("-filter:a", options.streamNum)} ${value}`)
+                break
+            case "-aac_":
+                outputOptions.push(`${buildStreamSuffix(prefix, options.streamNum)} ${value}`)
+                break
+            default:
+                logger.warn(`Unknown audio option: ${option}`)
+            }
+        }
+        return outputOptions.join(" ")
     }
 
     const encoder = "libx264"
@@ -249,7 +271,7 @@ async function register({
             buildPreset("vod_preset", options),
             buildTune("vod_tune", options),
             buildProfile("vod_profile", options),
-            store.vod_audio_filter_enabled ? buildAudioFilter("vod_audio_filters", options) : "",
+            store.vod_audio_config_enabled ? buildAudioOptions("vod_audio_filters", options) : "",
         ]
         return {
             outputOptions: outputOptions.filter((x) => x),
@@ -265,7 +287,7 @@ async function register({
             buildPreset("live_preset", options),
             buildTune("live_tune", options),
             buildProfile("live_profile", options),
-            store.live_audio_filter_enabled ? buildAudioFilter("live_audio_filters", options) : "",
+            store.live_audio_config_enabled ? buildAudioOptions("live_audio_filters", options) : "",
         ]
         return {
             outputOptions: outputOptions.filter((x) => x),
